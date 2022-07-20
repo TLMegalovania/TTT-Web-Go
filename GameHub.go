@@ -121,7 +121,8 @@ func (hub *GameHub) JoinRoom(id string) error {
 	}
 	rm, ok := hub.rooms.Get(id)
 	if !ok {
-		return errors.New("no such room")
+		hub.Clients().Caller().Send("joinedRoom", player.None)
+		return nil
 	}
 	pin := pi.(PlayerInfo)
 	rmd := rm.(RoomDetail)
@@ -143,6 +144,7 @@ func (hub *GameHub) JoinRoom(id string) error {
 		pin.tp = player.Observer
 		roomMod = false
 	}
+	hub.Clients().Caller().Send("joinedRoom", pin.tp)
 	hub.players.Set(connId, pin)
 	hub.Groups().RemoveFromGroup("hall", hub.ConnectionID())
 	hub.Groups().AddToGroup(id, hub.ConnectionID())
@@ -195,6 +197,46 @@ func (hub *GameHub) StartGame() error {
 	return nil
 }
 
-func (hub *GameHub) Go(index int) {
+func (hub *GameHub) Go(index int) error {
+	connId := hub.ConnectionID()
+	pi, ok := hub.players.Get(connId)
+	if !ok {
+		return errors.New("unauthorized")
+	}
+	pin := pi.(PlayerInfo)
+	roomId, pt := pin.roomId, pin.tp
+	if roomId == "" {
+		return errors.New("not in a room")
+	}
+	if pt == player.Observer {
+		return errors.New("not a player")
+	}
 
+	b, ok := hub.boards.Get(roomId)
+	if !ok {
+		return errors.New("game not started")
+	}
+	bd := b.(BoardInfo)
+	bt := bd.Turn
+	if bt == piece.Black && pt != player.Host || bt == piece.White && pt != player.Guest {
+		return errors.New("not your turn")
+	}
+	if index < 0 || index >= Col*Row {
+		return errors.New("position out of bounds")
+	}
+	if bd.Board[index] != piece.Null {
+		return errors.New("there's already a piece")
+	}
+	logic(&bd, index)
+	if bd.Result != win.Null {
+		hub.boards.Remove(roomId)
+		rm, _ := hub.rooms.Get(roomId)
+		rmd := rm.(RoomDetail)
+		rmd.P1Ready = false
+		rmd.P2Ready = false
+		hub.boards.Set(roomId, rmd)
+		hub.Clients().Group(roomId).Send("gotRoom", rmd)
+	}
+	hub.Clients().Group(roomId).Send("gotBoard", bd)
+	return nil
 }
