@@ -16,7 +16,7 @@ func main() {
 	players, rooms, boards := cmap.New(), cmap.New(), cmap.New()
 	server, err := signalr.NewServer(context.TODO(), signalr.HubFactory(func() signalr.HubInterface {
 		return &GameHub{players: &players, rooms: &rooms, boards: &boards}
-	}), signalr.Logger(kitlog.NewLogfmtLogger(os.Stdout), true))
+	}), signalr.Logger(kitlog.NewLogfmtLogger(os.Stdout), true), signalr.AllowOriginPatterns([]string{"localhost:*", "127.0.0.1:*"}))
 	if err != nil {
 		log.Fatal(err)
 	}

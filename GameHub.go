@@ -68,10 +68,11 @@ func leave(hub *GameHub, connId string, toHall bool) error {
 
 		hub.Clients().Group(roomId).Send("gotBoard", bdi)
 		hub.boards.Remove(roomId)
-	} else if rmd.Player1 == "" && rmd.Player2 == "" {
+	}
+	if rmd.Player1 == "" && rmd.Player2 == "" {
 		hub.rooms.Remove(roomId)
 		hub.Clients().Group(roomId).Send("deletedRoom")
-	} else {
+	} else if !ok {
 		hub.rooms.Set(roomId, rmd)
 		hub.Clients().Group(roomId).Send("gotRoom", rmd)
 	}
@@ -111,7 +112,7 @@ func (hub *GameHub) CreateRoom(name string) error {
 	hub.rooms.Set(roomId, RoomDetail{Name: name, Player1: pin.name})
 	hub.Groups().RemoveFromGroup("hall", connId)
 	hub.Groups().AddToGroup(roomId, connId)
-	hub.Clients().Caller().Send("createdRoom", hub.ConnectionID())
+	hub.Clients().Caller().Send("createdRoom", roomId)
 	hub.Clients().Group("hall").Send("gotRooms", roomDetailsToInfo(hub.rooms))
 
 	return nil
@@ -192,6 +193,7 @@ func (hub *GameHub) StartGame() error {
 	} else {
 		rmd.P2Ready = !rmd.P2Ready
 	}
+	hub.rooms.Set(roomId, rmd)
 	hub.Clients().Group(roomId).Send("gotRoom", rmd)
 	if rmd.P1Ready && rmd.P2Ready {
 		bd := BoardInfo{Board: make([]int, Row*Col), Turn: piece.Black}
@@ -240,6 +242,10 @@ func (hub *GameHub) Go(index int) error {
 		rmd.P2Ready = false
 		hub.boards.Set(roomId, rmd)
 		hub.Clients().Group(roomId).Send("gotRoom", rmd)
+	} else if bt == piece.Black {
+		bd.Turn = piece.White
+	} else {
+		bd.Turn = piece.Black
 	}
 	hub.Clients().Group(roomId).Send("gotBoard", bd)
 	return nil
