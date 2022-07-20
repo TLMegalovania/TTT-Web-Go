@@ -56,20 +56,24 @@ func leave(hub *GameHub, connId string, toHall bool) error {
 		rmd.Player2 = ""
 		rmd.P2Ready = false
 	}
-	if rmd.Player1 == "" && rmd.Player2 == "" {
-		hub.rooms.Remove(roomId)
-		hub.Clients().Group(roomId).Send("deletedRoom")
-	} else {
-		hub.rooms.Set(roomId, rmd)
-		hub.Clients().Group(roomId).Send("gotRoom", rmd)
-	}
 
 	bd, ok := hub.boards.Get(roomId)
 	if ok {
 		bdi := bd.(BoardInfo)
 		bdi.Result = win.Flee
+		rmd.P1Ready = false
+		rmd.P2Ready = false
+		hub.rooms.Set(roomId, rmd)
+		hub.Clients().Group(roomId).Send("gotRoom", rmd)
+
 		hub.Clients().Group(roomId).Send("gotBoard", bdi)
 		hub.boards.Remove(roomId)
+	} else if rmd.Player1 == "" && rmd.Player2 == "" {
+		hub.rooms.Remove(roomId)
+		hub.Clients().Group(roomId).Send("deletedRoom")
+	} else {
+		hub.rooms.Set(roomId, rmd)
+		hub.Clients().Group(roomId).Send("gotRoom", rmd)
 	}
 
 	hub.Clients().Group("hall").Send("gotRooms", roomDetailsToInfo(hub.rooms))
