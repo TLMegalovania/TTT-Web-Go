@@ -42,7 +42,7 @@ var Dirs = [][][]int{
 }
 
 // pure function
-func logic(bin BoardInfo, index int) {
+func logic(bin BoardInfo, index int) int {
 	lines := 0
 	p0, p1 := index/Col, index%Col
 	for _, dir := range Dirs {
@@ -70,16 +70,16 @@ func logic(bin BoardInfo, index int) {
 	if lines >= 2 {
 		if bin.Turn == piece.
 			Black {
-			bin.Result = win.Black
+			return win.Black
 		} else {
-			bin.Result = win.White
+			return win.White
 		}
 	} else if lines == 1 {
 		if bin.Turn == piece.
 			Black {
-			bin.Result = win.White
+			return win.White
 		} else {
-			bin.Result = win.Black
+			return win.Black
 		}
 	} else {
 		full := true
@@ -90,7 +90,8 @@ func logic(bin BoardInfo, index int) {
 			}
 		}
 		if full {
-			bin.Result = win.Tie
+			return win.Tie
 		}
 	}
+	return win.Null
 }

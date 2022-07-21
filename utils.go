@@ -17,7 +17,7 @@ func roomDetailsToInfo(rd *carr.CArray[RoomDetail]) (values []RoomInfo) {
 		} else {
 			state = room.Full
 		}
-		values = append(values, RoomInfo{Id: tp.Key, Player1: info.Player1, Player2: info.Player2, State: state})
+		values = append(values, RoomInfo{Player1: info.Player1, Player2: info.Player2, State: state})
 	}
 	return
 }

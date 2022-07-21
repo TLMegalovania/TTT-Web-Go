@@ -1,7 +1,6 @@
 package main
 
 type RoomInfo struct {
-	Id               int
 	Player1, Player2 string
 	State            int
 }

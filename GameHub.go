@@ -300,15 +300,16 @@ func (hub *GameHub) Go(index int) error {
 		return errors.New("there's already a piece")
 	}
 	bd.Board[index] = bd.Turn
-	logic(bd, index)
+	result := logic(bd, index)
 	srid := strconv.Itoa(roomId)
-	if bd.Result != win.Null {
+	if result != win.Null {
+		bd.Result = result
 		setter := func(rmd *RoomDetail) {
 			rmd.P1Ready = false
 			rmd.P2Ready = false
 		}
 		hub.rooms.Set(roomId, setter)
-		hub.Clients().Group(srid).Send("gotRoom", rmd)
+		hub.Clients().Group(srid).Send("gotRoom", hub.rooms.Get(roomId))
 	} else if bt == piece.Black {
 		bd.Turn = piece.White
 	} else {
