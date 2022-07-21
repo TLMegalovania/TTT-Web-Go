@@ -15,11 +15,11 @@ import (
 const roomCount = 10
 
 func main() {
-	const address = "localhost:19810"
+	const address = "0.0.0.0:19810"
 	players, rooms, boards := cmap.New[PlayerInfo](), carr.NewCArray[RoomDetail](roomCount), carr.NewCArray[BoardInfo](roomCount)
 	server, err := signalr.NewServer(context.TODO(), signalr.HubFactory(func() signalr.HubInterface {
 		return &GameHub{players: &players, rooms: rooms, boards: boards}
-	}), signalr.Logger(kitlog.NewLogfmtLogger(os.Stdout), true), signalr.AllowOriginPatterns([]string{"localhost:*", "127.0.0.1:*"}))
+	}), signalr.Logger(kitlog.NewLogfmtLogger(os.Stdout), true), signalr.InsecureSkipVerify(true))
 	if err != nil {
 		log.Fatal(err)
 	}

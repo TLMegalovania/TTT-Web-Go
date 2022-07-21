@@ -316,10 +316,15 @@ func (hub *GameHub) Go(index int) error {
 		bd.Turn = piece.Black
 	}
 	hub.boards.Set(roomId, func(bin *BoardInfo) {
+		// in case of racing condition
+		if bin.Result != win.Null {
+			return
+		}
 		bin.Board = bd.Board //maybe useless
 		bin.Result = bd.Result
 		bin.Turn = bd.Turn
+
+		hub.Clients().Group(srid).Send("gotBoard", bd)
 	})
-	hub.Clients().Group(srid).Send("gotBoard", bd)
 	return nil
 }

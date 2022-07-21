@@ -1,6 +1,8 @@
 package carr
 
-import "sync"
+import (
+	"sync"
+)
 
 type cItem[v interface{}] struct {
 	item   v
@@ -22,9 +24,8 @@ func NewCArray[t interface{}](count int) *CArray[t] {
 func (a *CArray[t]) Get(index int) t {
 	c := a.arr[index]
 	c.locker.RLock()
-	res := c.item
-	c.locker.RUnlock()
-	return res
+	defer c.locker.RUnlock()
+	return c.item
 }
 
 func (a *CArray[t]) Set(index int, setter func(value *t)) {
@@ -33,27 +34,27 @@ func (a *CArray[t]) Set(index int, setter func(value *t)) {
 	v := c.item
 	setter(&v)
 	a.arr[index] = cItem[t]{item: v, locker: c.locker}
-	c.locker.Unlock()
+	defer c.locker.Unlock()
 }
 
 func (a *CArray[t]) Count() int {
 	return len(a.arr)
 }
 
-type CTuple[t interface{}] struct {
-	Key int
-	Val t
+type CTuple[k, v interface{}] struct {
+	Key k
+	Val v
 }
 
-func (a *CArray[t]) Iter() <-chan CTuple[t] {
-	ch := make(chan CTuple[t])
+func (a *CArray[t]) Iter() <-chan CTuple[int, t] {
+	ch := make(chan CTuple[int, t], len(a.arr))
 	go func() {
 		for i, item := range a.arr {
 			item.locker.RLock()
-			ch <- CTuple[t]{Key: i, Val: item.item}
+			ch <- CTuple[int, t]{Key: i, Val: item.item}
 			item.locker.RUnlock()
 		}
-		close(ch)
+		defer close(ch)
 	}()
 	return ch
 }
