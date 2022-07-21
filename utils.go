@@ -1,15 +1,14 @@
 package main
 
 import (
+	"ttt/carr"
 	"ttt/room"
-
-	cmap "github.com/orcaman/concurrent-map"
 )
 
-func roomDetailsToInfo(rd *cmap.ConcurrentMap) (values []RoomInfo) {
+func roomDetailsToInfo(rd *carr.CArray[RoomDetail]) (values []RoomInfo) {
 	values = make([]RoomInfo, 0, rd.Count())
-	for tp := range rd.IterBuffered() {
-		info := tp.Val.(RoomDetail)
+	for tp := range rd.Iter() {
+		info := tp.Val
 		var state int
 		if info.P1Ready && info.P2Ready {
 			state = room.InGame
@@ -18,7 +17,7 @@ func roomDetailsToInfo(rd *cmap.ConcurrentMap) (values []RoomInfo) {
 		} else {
 			state = room.Full
 		}
-		values = append(values, RoomInfo{Id: tp.Key, Name: info.Name, Player1: info.Player1, Player2: info.Player2, State: state})
+		values = append(values, RoomInfo{Id: tp.Key, Player1: info.Player1, Player2: info.Player2, State: state})
 	}
 	return
 }

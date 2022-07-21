@@ -41,8 +41,8 @@ var Dirs = [][][]int{
 	},
 }
 
-func logic(bin *BoardInfo, index int) {
-	bin.Board[index] = bin.Turn
+// pure function
+func logic(bin BoardInfo, index int) {
 	lines := 0
 	p0, p1 := index/Col, index%Col
 	for _, dir := range Dirs {
